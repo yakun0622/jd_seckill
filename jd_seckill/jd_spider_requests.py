@@ -14,6 +14,7 @@ from lxml import etree
 from concurrent.futures import ProcessPoolExecutor
 
 from .jd_logger import logger
+from .messenger import Messenger
 from .timer import Timer
 from .config import global_config
 from .exception import SKException
@@ -28,13 +29,14 @@ from .util import (
     email
 
 )
-
 from datetime import datetime, timedelta
+
 
 class SpiderSession:
     """
     Session相关操作
     """
+
     def __init__(self):
         self.cookies_dir_path = "cookies/"
         self.user_agent = global_config.getRaw('config', 'default_user_agent')
@@ -110,6 +112,7 @@ class QrLogin:
     """
     扫码登录
     """
+
     def __init__(self, spider_session: SpiderSession):
         """
         初始化扫码登录
@@ -325,7 +328,8 @@ class JdTdudfp:
             await page.goto(a_href)
             await page.waitFor(".goods_item_link")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            a_href = await page.querySelectorAllEval(".goods_item_link", "(elements) => elements[{}].href".format(str(random.randint(1,20))))
+            a_href = await page.querySelectorAllEval(".goods_item_link", "(elements) => elements[{}].href".format(
+                str(random.randint(1, 20))))
             await page.goto(a_href)
             await page.waitFor("#InitCartUrl")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
@@ -337,7 +341,7 @@ class JdTdudfp:
             await page.goto(a_href)
             await page.waitFor(".common-submit-btn")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
-            
+
             await page.click(".common-submit-btn")
             await page.waitFor("#sumPayPriceId")
             logger.info("page_title：【%s】, page_url：【%s】" % (await page.title(), page.url))
@@ -377,6 +381,8 @@ class JdSeckill(object):
         self.nick_name = None
 
         self.running_flag = True
+        self.order_data = None
+        self.messenger = Messenger()
 
     def login_by_qrcode(self):
         """
@@ -399,6 +405,7 @@ class JdSeckill(object):
         """
         用户登陆态校验装饰器。若用户未登陆，则调用扫码登陆
         """
+
         @functools.wraps(func)
         def new_func(self, *args, **kwargs):
             if not self.qrlogin.is_login:
@@ -407,6 +414,7 @@ class JdSeckill(object):
             if not self.jd_tdufp.is_init:
                 self.jd_tdufp.init_jd_tdudfp()
             return func(self, *args, **kwargs)
+
         return new_func
 
     @check_login_and_jdtdufp
@@ -429,6 +437,7 @@ class JdSeckill(object):
         多进程进行抢购
         work_count：进程数量
         """
+        self._get_seckill_order_data()
         with ProcessPoolExecutor(work_count) as pool:
             for i in range(work_count):
                 pool.submit(self.seckill)
@@ -450,6 +459,7 @@ class JdSeckill(object):
         抢购
         """
         while self.running_flag:
+            logger.info('订单data= %s', self.order_data)
             self.seckill_canstill_running()
             try:
                 self.request_seckill_url()
@@ -466,7 +476,7 @@ class JdSeckill(object):
             来判断抢购的任务是否可以继续运行
         """
         buy_time = self.timers.buytime_get()
-        continue_time = int(global_config.getRaw('config','continue_time'))
+        continue_time = int(global_config.getRaw('config', 'continue_time'))
         stop_time = datetime.strptime(
             (buy_time + timedelta(minutes=continue_time)).strftime("%Y-%m-%d %H:%M:%S.%f"),
             "%Y-%m-%d %H:%M:%S.%f"
@@ -492,7 +502,7 @@ class JdSeckill(object):
         resp = self.session.get(url=url, params=payload, headers=headers)
         resp_json = parse_json(resp.text)
         reserve_url = resp_json.get('url')
-        
+
         while True:
             try:
                 self.session.get(url='https:' + reserve_url)
@@ -621,14 +631,21 @@ class JdSeckill(object):
             'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',
         }
-        resp = self.session.post(url=url, data=data, headers=headers)
-
         resp_json = None
-        try:
-            resp_json = parse_json(resp.text)
-        except Exception:
-            raise SKException('抢购失败，返回信息:{}'.format(resp.text[0: 128]))
-
+        for i in range(5):
+            resp = self.session.post(url=url, data=data, headers=headers)
+            logger.info(resp.text)
+            if resp.text is not None:
+                try:
+                    resp_json = parse_json(resp.text)
+                except Exception:
+                    logger.error('获取下单信息失败-%s', resp.text[0: 128])
+                    # raise SKException('抢购失败，返回信息:{}'.format(resp.text[0: 128]))
+                break
+            else:
+                logger.warn('获取下单信息失败，重试-%d', i)
+        if resp_json is None:
+            raise SKException('获取下单信息失败，返回信息为空')
         return resp_json
 
     def _get_seckill_order_data(self):
@@ -678,6 +695,7 @@ class JdSeckill(object):
             'pru': ''
         }
         logger.info("order_date：%s", data)
+        self.order_data = data
         return data
 
     def submit_seckill_order(self):
@@ -689,7 +707,7 @@ class JdSeckill(object):
             'skuId': self.sku_id,
         }
         try:
-            self.seckill_order_data[self.sku_id] = self._get_seckill_order_data()
+            self.seckill_order_data[self.sku_id] = self.order_data
         except Exception as e:
             logger.info('抢购失败，无法获取生成订单的基本信息，接口返回:【{}】'.format(str(e)))
             return False
@@ -727,6 +745,7 @@ class JdSeckill(object):
             logger.info('抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}'.format(order_id, total_money, pay_url))
             if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
                 success_message = "抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}".format(order_id, total_money, pay_url)
+                self.messenger.send('抢购结果', success_message)
                 send_wechat(success_message)
                 self.running_flag = False
             return True
@@ -734,5 +753,6 @@ class JdSeckill(object):
             logger.info('抢购失败，返回信息:{}'.format(resp_json))
             if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
                 error_message = '抢购失败，返回信息:{}'.format(resp_json)
+                self.messenger.send('抢购结果', error_message)
                 send_wechat(error_message)
             return False
