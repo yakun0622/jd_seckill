@@ -745,14 +745,12 @@ class JdSeckill(object):
             logger.info('抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}'.format(order_id, total_money, pay_url))
             if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
                 success_message = "抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}".format(order_id, total_money, pay_url)
-                self.messenger.send('抢购结果', success_message)
-                send_wechat(success_message)
+                self.messenger.send('抢购结果-成功', success_message)
                 self.running_flag = False
             return True
         else:
             logger.info('抢购失败，返回信息:{}'.format(resp_json))
             if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
                 error_message = '抢购失败，返回信息:{}'.format(resp_json)
-                self.messenger.send('抢购结果', error_message)
-                send_wechat(error_message)
+                self.messenger.send('抢购结果-失败', error_message)
             return False
