@@ -1,12 +1,12 @@
 FROM python:3.8-slim-buster
 
-LABEL MAINTAINER="@weidonggg"
+LABEL MAINTAINER="yakun"
 
-ENV GIT_BRANCH master
 ENV TIMEZONE Asia/Shanghai
 
 COPY docker-python-entrypoint /usr/local/bin/
 COPY qrcode /usr/local/bin/
+COPY ../../jd_seckill /app
 
 RUN set -ex; \
     ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime \
@@ -34,7 +34,7 @@ RUN set -ex; \
                    libnss3; \
       \
       # clone jd seckill code.
-      git clone -b $GIT_BRANCH https://github.com/huanghyw/jd_seckill.git /app; \
+#      git clone -b $GIT_BRANCH https://github.com/huanghyw/jd_seckill.git /app; \
       cd /app \
         && rm -rf .git; \
       \
@@ -55,6 +55,8 @@ RUN set -ex; \
         -e 's/^email_host.*/email_host=$JD_SECKILL_EMAIL_HOST/g' \
         -e 's/^email_user.*/email_user=$JD_SECKILL_EMAIL_USER/g' \
         -e 's/^email_pwd.*/email_pwd=$JD_SECKILL_EMAIL_PWD/g' \
+        -e 's/^bark_enable.*/bark_enable=$JD_SECKILL_BARK_ENABLE/g' \
+        -e 's/^bark_push.*/bark_push=$JD_SECKILL_BARK_PUSH/g' \
         -e '/#/d' \
         config.ini; \
       \
