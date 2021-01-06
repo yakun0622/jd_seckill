@@ -81,7 +81,7 @@ email = Email(
     mail_host=global_config.getRaw('messenger', 'email_host'),
     mail_user=global_config.getRaw('messenger', 'email_user'),
     mail_pwd=global_config.getRaw('messenger', 'email_pwd'),
-    mail_receiver=global_config.getRaw('messenger', 'email_user_receiver'),
+    mail_receiver=global_config.getRaw('messenger', 'email_receiver'),
 )
 
 

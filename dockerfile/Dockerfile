@@ -54,11 +54,13 @@ RUN set -ex; \
         -e 's/^email_enable.*/email_enable=$JD_SECKILL_EMAIL_ENABLE/g' \
         -e 's/^email_host.*/email_host=$JD_SECKILL_EMAIL_HOST/g' \
         -e 's/^email_user.*/email_user=$JD_SECKILL_EMAIL_USER/g' \
+        -e 's/^email_receiver.*/email_receiver=$JD_SECKILL_EMAIL_RECEIVER/g' \
         -e 's/^email_pwd.*/email_pwd=$JD_SECKILL_EMAIL_PWD/g' \
         -e 's/^bark_enable.*/bark_enable=$JD_SECKILL_BARK_ENABLE/g' \
         -e 's/^bark_push.*/bark_push=$JD_SECKILL_BARK_PUSH/g' \
         -e '/#/d' \
         config.ini; \
+        cat config.ini; \
       \
        \
         \
