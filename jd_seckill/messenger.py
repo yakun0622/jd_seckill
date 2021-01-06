@@ -111,8 +111,8 @@ class Messenger(object):
 
     def _send_sc(self, title, content):
         """推送信息到微信"""
-        logger.info('推送信息到微信')
         if global_config.getRaw('messenger', 'server_chan_enable') == 'true':
+            logger.info('推送信息到微信')
             url = 'http://sc.ftqq.com/{}.send'.format(global_config.getRaw('messenger', 'server_chan_sckey'))
             payload = {
                 "text": title,
@@ -126,6 +126,7 @@ class Messenger(object):
     def _send_bark(self, title, content):
         """推送信息到bark"""
         if global_config.getRaw('messenger', 'bark_enable') == 'true':
+            logger.info('推送信息到bark')
             url = '{}/{}/{}'.format(global_config.getRaw('messenger', 'bark_push'), title,
                                     quote(content, 'utf-8'))
             headers = {
@@ -135,4 +136,5 @@ class Messenger(object):
 
     def _send_email(self, title, content):
         if global_config.getRaw('messenger', 'email_enable') == 'true':
+            logger.info('推送信息到邮箱')
             email.send(title, content, [email.mail_receiver])

@@ -722,8 +722,7 @@ class JdSeckill(object):
         resp = self.session.post(
             url=url,
             params=payload,
-            data=self.seckill_order_data.get(
-                self.sku_id),
+            data=self.seckill_order_data.get(self.sku_id),
             headers=headers)
         resp_json = None
         try:
