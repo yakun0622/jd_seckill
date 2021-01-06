@@ -2,7 +2,7 @@ version: "2.2"
 services:
   jd-seckill:
     container_name: jd-seckill
-    image: huanghyw/jd-seckill:latest
+    image: yakun0622/jd-seckill:latest
     build:
       context: ../dockerfile
       dockerfile: Dockerfile
