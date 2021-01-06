@@ -24,7 +24,7 @@ if __name__ == '__main__':
     if choice_function == '1':
         jd_seckill.reserve()
     elif choice_function == '2':
-        jd_seckill.seckill_by_proc_pool()
+        jd_seckill.seckill_by_proc_pool(10)
     else:
         print('没有此功能')
         sys.exit(1)
