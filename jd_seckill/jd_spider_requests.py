@@ -411,7 +411,7 @@ class JdSeckill(object):
             if not self.qrlogin.is_login:
                 logger.info("{0} 需登陆后调用，开始扫码登陆".format(func.__name__))
                 self.login_by_qrcode()
-            if not self.jd_tdufp.is_init:
+            if not self.jd_tdufp.is_init and global_config.getRaw('config', 'fp') == '':
                 self.jd_tdufp.init_jd_tdudfp()
             return func(self, *args, **kwargs)
 
@@ -689,8 +689,8 @@ class JdSeckill(object):
             'areaCode': '',
             'overseas': 0,
             'phone': '',
-            'eid': self.jd_tdufp.get("eid") if self.jd_tdufp.get("eid") else global_config.getRaw('config', 'eid'),
-            'fp': self.jd_tdufp.get("fp") if self.jd_tdufp.get("fp") else global_config.getRaw('config', 'fp'),
+            'eid': global_config.getRaw('config', 'eid') if global_config.getRaw('config', 'eid') else self.jd_tdufp.get("eid"),
+            'fp': global_config.getRaw('config', 'fp') if global_config.getRaw('config', 'fp') else self.jd_tdufp.get("fp"),
             'token': token,
             'pru': ''
         }

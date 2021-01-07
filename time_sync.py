@@ -4,7 +4,8 @@ import json
 import os
 import time
 from datetime import datetime
-from .jd_logger import logger
+
+from jd_seckill.jd_logger import logger
 
 if __name__ == '__main__':
     if platform.system() == 'Linux':
